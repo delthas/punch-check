@@ -1,0 +1,22 @@
+image: archlinux
+packages:
+  - git
+  - go
+sources:
+  - git@github.com:delthas/punch-check.git
+secrets:
+  - 63d7a0ac-2635-4d42-9709-efcd2cf74858 # ssh deploy key
+tasks:
+  - build: |
+      cd punch-check
+      GOOS=windows GOARCH=386 go build -ldflags "-s -w" -v -o punch-check.exe ./client
+      GOOS=windows GOARCH=386 go build -ldflags "-H windowsgui -s -w" -v -o punch-check-gui.exe ./client-gui
+      GOOS=windows GOARCH=386 go build -ldflags "-s -w" -v -o punch-check-relay.exe ./relay
+      GOOS=windows GOARCH=386 go build -ldflags "-s -w" -v -o punch-check-server.exe ./server
+  - deploy: |
+      cd punch-check
+      ssh -p 2222 -o StrictHostKeyChecking=no -q user@delthas.fr 'mkdir -p /srv/http/blog/punch-check/windows/'
+      scp -P 2222 -o StrictHostKeyChecking=no -q punch-check.exe user@delthas.fr:/srv/http/blog/punch-check/windows/punch-check.exe
+      scp -P 2222 -o StrictHostKeyChecking=no -q punch-check-gui.exe user@delthas.fr:/srv/http/blog/punch-check/windows/punch-check-gui.exe
+      scp -P 2222 -o StrictHostKeyChecking=no -q punch-check-relay.exe user@delthas.fr:/srv/http/blog/punch-check/windows/punch-check-relay.exe
+      scp -P 2222 -o StrictHostKeyChecking=no -q punch-check-server.exe user@delthas.fr:/srv/http/blog/punch-check/windows/punch-check-server.exe
