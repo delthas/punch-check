@@ -14,7 +14,7 @@ import (
 	. "github.com/delthas/punch-check"
 )
 
-var defaultServerHost = "punchcheckback.delthas.fr:23458"
+var defaultServerHost = "delthas.fr"
 var retryTimeout = 15 * time.Second
 
 var logErr = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
@@ -23,7 +23,6 @@ var logDebug *log.Logger
 var mutex sync.Mutex
 var control *net.TCPConn
 
-var serverAddr *net.TCPAddr
 var cs []*net.UDPConn
 var ports []int
 
@@ -39,7 +38,7 @@ func writeControl(m Message) {
 }
 
 func main() {
-	serverHost := flag.String("host", defaultServerHost, "server hostname:port")
+	serverHost := flag.String("host", defaultServerHost, "server hostname[:port]")
 	debug := flag.Bool("debug", false, "add debug logging")
 	flag.Parse()
 
@@ -53,10 +52,18 @@ func main() {
 		logDebug = log.New(ioutil.Discard, "", 0)
 	}
 
-	var err error
-	serverAddr, err = net.ResolveTCPAddr("tcp4", *serverHost)
+	var serverAddr *net.TCPAddr
+	_, _, err := net.SplitHostPort(*serverHost)
 	if err != nil {
-		logErr.Fatalf("failed resolving server host %q: %v", *serverHost, err)
+		serverAddr, err = ResolveTCPBySRV("punchcheck", *serverHost)
+		if err != nil {
+			logErr.Fatalf("failed resolving server host %q: %v", *serverHost, err)
+		}
+	} else {
+		serverAddr, err = net.ResolveTCPAddr("tcp4", *serverHost)
+		if err != nil {
+			logErr.Fatalf("failed resolving server host %q: %v", *serverHost, err)
+		}
 	}
 
 	defer atomic.StoreUint32(&closed, 1)

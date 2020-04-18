@@ -13,7 +13,7 @@ import (
 	. "github.com/delthas/punch-check"
 )
 
-var defaultServerHost = "punchcheckback.delthas.fr:23458"
+var defaultServerHost = "delthas.fr"
 var defaultStartPort = 34500
 
 var logErr = log.New(os.Stderr, "", 0)
@@ -22,7 +22,7 @@ var logDebug *log.Logger
 var closed uint32 = 0
 
 func main() {
-	serverHost := flag.String("host", defaultServerHost, "server hostname:port")
+	serverHost := flag.String("host", defaultServerHost, "server hostname[:port]")
 	debug := flag.Bool("debug", false, "add debug logging")
 	flag.Parse()
 
@@ -32,9 +32,18 @@ func main() {
 		logDebug = log.New(ioutil.Discard, "", 0)
 	}
 
-	serverAddr, err := net.ResolveTCPAddr("tcp4", *serverHost)
+	var serverAddr *net.TCPAddr
+	_, _, err := net.SplitHostPort(*serverHost)
 	if err != nil {
-		logErr.Fatalf("failed resolving server host %q: %v", *serverHost, err)
+		serverAddr, err = ResolveTCPBySRV("punchcheck", *serverHost)
+		if err != nil {
+			logErr.Fatalf("failed resolving server host %q: %v", *serverHost, err)
+		}
+	} else {
+		serverAddr, err = net.ResolveTCPAddr("tcp4", *serverHost)
+		if err != nil {
+			logErr.Fatalf("failed resolving server host %q: %v", *serverHost, err)
+		}
 	}
 
 	defer atomic.StoreUint32(&closed, 1)

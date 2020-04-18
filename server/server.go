@@ -81,10 +81,10 @@ var punchTimeout = 5 * time.Second
 var logErr = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 var logDebug = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 
-var allowedRelayHosts = []string{"punchcheckback.delthas.fr", "dille.cc", "delthas.fr"}
+var allowedRelayHosts = []string{"dille.cc", "delthas.fr"}
 var allowedRelays []net.IP
 
-var defaultServerPort = 23458
+var defaultServerPort = 17485
 
 var events = make(chan event, 1000)
 var connections = make(map[*net.TCPConn]*connection)

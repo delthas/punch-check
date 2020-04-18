@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"strconv"
 )
 
 type MessageType byte
@@ -117,6 +118,26 @@ func Index(a []int, e int) int {
 		}
 	}
 	return -1
+}
+
+func ResolveTCPBySRV(service string, host string) (*net.TCPAddr, error) {
+	_, srvs, err := net.LookupSRV(service, "tcp", host)
+	if err != nil {
+		return nil, fmt.Errorf("resolving service %q of host %q: %v", service, host, err)
+	}
+	var lastRecord string
+	for _, srv := range srvs {
+		addr, err := net.ResolveTCPAddr("tcp4", net.JoinHostPort(srv.Target, strconv.Itoa(int(srv.Port))))
+		if err != nil {
+			lastRecord = srv.Target
+			continue
+		}
+		return addr, nil
+	}
+	if err == nil {
+		return nil, fmt.Errorf("resolving service %q of host %q: no SRV records found", service, host)
+	}
+	return nil, fmt.Errorf("resolving service %q of host %q: resolving %q: %v", service, host, lastRecord, err)
 }
 
 var ClientRelaysCount = 2

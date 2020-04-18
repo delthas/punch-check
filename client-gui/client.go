@@ -16,7 +16,7 @@ import (
 	. "github.com/delthas/punch-check"
 )
 
-var serverHost = "punchcheckback.delthas.fr:23458"
+var serverHost = "delthas.fr"
 var defaultStartPort = 34500
 
 var mw *walk.MainWindow
@@ -30,10 +30,9 @@ func log(f string, args ...interface{}) {
 }
 
 func process() {
-	serverAddr, err := net.ResolveTCPAddr("tcp4", serverHost)
+	serverAddr, err := ResolveTCPBySRV("punchcheck", serverHost)
 	if err != nil {
 		log("failed resolving server host %q: %v", serverHost, err)
-		return
 	}
 
 	cs := make([]*net.UDPConn, 10)
