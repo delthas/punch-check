@@ -7,14 +7,21 @@ sources:
 secrets:
   - 63d7a0ac-2635-4d42-9709-efcd2cf74858 # ssh deploy key
 tasks:
+  - setup: |
+      # see https://github.com/containers/toolbox/pull/534
+      curl https://raw.githubusercontent.com/containers/toolbox/master/src/libc-wrappers/libc-wrappers.c -O
+      gcc -c libc-wrappers.c
+      ar rcs libc-wrappers.a libc-wrappers.o
   - build: |
       cd punch-check
-      GOARCH=386 go build -ldflags "-s -w" -v -o punch-check ./client
-      GOARCH=386 go build -ldflags "-s -w" -v -o punch-check-relay ./relay
-      GOARCH=386 go build -ldflags "-s -w" -v -o punch-check-server ./server
+      go build -ldflags "-s -w -extldflags '-Wl,--wrap,pthread_sigmask $PWD/../libc-wrappers.a' -linkmode external" -v -o punch-check ./client
+      go build -ldflags "-s -w -extldflags '-Wl,--wrap,pthread_sigmask $PWD/../libc-wrappers.a' -linkmode external" -v -o punch-check-relay ./relay
+      go build -ldflags "-s -w -extldflags '-Wl,--wrap,pthread_sigmask $PWD/../libc-wrappers.a' -linkmode external" -v -o punch-check-server ./server
   - deploy: |
       cd punch-check
       ssh -p 2222 -o StrictHostKeyChecking=no -q user@delthas.fr 'mkdir -p /srv/http/blog/punch-check/linux/'
+      ssh -p 2222 -o StrictHostKeyChecking=no -q user@delthas.fr 'rm -f /srv/http/blog/punch-check/linux/punch-check-relay'
+      ssh -p 2222 -o StrictHostKeyChecking=no -q user@delthas.fr 'rm -f /srv/http/blog/punch-check/linux/punch-check-server'
       scp -P 2222 -o StrictHostKeyChecking=no -q punch-check user@delthas.fr:/srv/http/blog/punch-check/linux/punch-check
       scp -P 2222 -o StrictHostKeyChecking=no -q punch-check-relay user@delthas.fr:/srv/http/blog/punch-check/linux/punch-check-relay
       scp -P 2222 -o StrictHostKeyChecking=no -q punch-check-server user@delthas.fr:/srv/http/blog/punch-check/linux/punch-check-server

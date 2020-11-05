@@ -81,7 +81,6 @@ var punchTimeout = 5 * time.Second
 var logErr = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 var logDebug = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 
-var allowedRelayHosts = []string{"dille.cc", "delthas.fr"}
 var allowedRelays []net.IP
 
 var defaultServerPort = 17485
@@ -137,7 +136,15 @@ func isRelay(addr *net.TCPAddr) bool {
 
 func main() {
 	serverPort := flag.Int("port", defaultServerPort, "port to listen on")
+	var allowedRelayHosts []string
+	flag.Var((*StringSliceFlag)(&allowedRelayHosts), "relay", "relay hostname/ip (pass multiple times for multiple relays)")
 	flag.Parse()
+
+	if len(allowedRelayHosts) < ClientRelaysCount {
+		fmt.Fprintf(os.Stderr, "at least %d relays are required (use -relay)\n", ClientRelaysCount)
+		flag.Usage()
+		return
+	}
 
 	allowedRelays = make([]net.IP, len(allowedRelayHosts))
 	for i, relayHost := range allowedRelayHosts {

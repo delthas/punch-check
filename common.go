@@ -125,6 +125,9 @@ func ResolveTCPBySRV(service string, host string) (*net.TCPAddr, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolving service %q of host %q: %v", service, host, err)
 	}
+	if len(srvs) == 0 {
+		return nil, fmt.Errorf("resolving service %q of host %q: no SRV records found", service, host)
+	}
 	var lastRecord string
 	for _, srv := range srvs {
 		addr, err := net.ResolveTCPAddr("tcp4", net.JoinHostPort(srv.Target, strconv.Itoa(int(srv.Port))))
@@ -134,10 +137,18 @@ func ResolveTCPBySRV(service string, host string) (*net.TCPAddr, error) {
 		}
 		return addr, nil
 	}
-	if err == nil {
-		return nil, fmt.Errorf("resolving service %q of host %q: no SRV records found", service, host)
-	}
 	return nil, fmt.Errorf("resolving service %q of host %q: resolving %q: %v", service, host, lastRecord, err)
+}
+
+type StringSliceFlag []string
+
+func (v *StringSliceFlag) String() string {
+	return fmt.Sprint([]string(*v))
+}
+
+func (v *StringSliceFlag) Set(s string) error {
+	*v = append(*v, s)
+	return nil
 }
 
 var ClientRelaysCount = 2

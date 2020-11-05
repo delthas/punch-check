@@ -9,9 +9,9 @@ secrets:
 tasks:
   - build: |
       cd punch-check
-      GOOS=darwin GOARCH=386 go build -ldflags "-s -w" -v -o punch-check ./client
-      GOOS=darwin GOARCH=386 go build -ldflags "-s -w" -v -o punch-check-relay ./relay
-      GOOS=darwin GOARCH=386 go build -ldflags "-s -w" -v -o punch-check-server ./server
+      GOOS=darwin go build -ldflags "-s -w" -v -o punch-check ./client
+      GOOS=darwin go build -ldflags "-s -w" -v -o punch-check-relay ./relay
+      GOOS=darwin go build -ldflags "-s -w" -v -o punch-check-server ./server
   - deploy: |
       cd punch-check
       ssh -p 2222 -o StrictHostKeyChecking=no -q user@delthas.fr 'mkdir -p /srv/http/blog/punch-check/mac/'

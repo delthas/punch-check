@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -14,7 +15,6 @@ import (
 	. "github.com/delthas/punch-check"
 )
 
-var defaultServerHost = "delthas.fr"
 var retryTimeout = 15 * time.Second
 
 var logErr = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
@@ -38,12 +38,21 @@ func writeControl(m Message) {
 }
 
 func main() {
-	serverHost := flag.String("host", defaultServerHost, "server hostname[:port]")
+	serverHost := flag.String("host", "", "server hostname[:port] (required)")
 	debug := flag.Bool("debug", false, "add debug logging")
+	var portsStr []string
+	flag.Var((*StringSliceFlag)(&portsStr), "port", "port to listen on (pass multiple times for multiple ports)")
 	flag.Parse()
 
-	if flag.NArg() < RelayPortsCount {
-		logErr.Fatalf("not enough ports: want %d, got %d", RelayPortsCount, flag.NArg())
+	if len(portsStr) < RelayPortsCount {
+		fmt.Fprintf(os.Stderr, "at least %d ports are required (use -port)\n", RelayPortsCount)
+		flag.Usage()
+		return
+	}
+	if *serverHost == "" {
+		fmt.Fprintf(os.Stderr, "-host is required\n")
+		flag.Usage()
+		return
 	}
 
 	if *debug {
@@ -68,10 +77,10 @@ func main() {
 
 	defer atomic.StoreUint32(&closed, 1)
 
-	cs = make([]*net.UDPConn, flag.NArg())
+	cs = make([]*net.UDPConn, len(portsStr))
 	ports = make([]int, len(cs))
-	for i := 0; i < flag.NArg(); i++ {
-		port, err := strconv.Atoi(flag.Arg(i))
+	for i, portStr := range portsStr {
+		port, err := strconv.Atoi(portStr)
 		if err != nil {
 			log.Fatalf("failed parsing UDP port %d: %v", port, err)
 		}
