@@ -130,7 +130,8 @@ func ResolveTCPBySRV(service string, host string) (*net.TCPAddr, error) {
 	}
 	var lastRecord string
 	for _, srv := range srvs {
-		addr, err := net.ResolveTCPAddr("tcp4", net.JoinHostPort(srv.Target, strconv.Itoa(int(srv.Port))))
+		var addr *net.TCPAddr
+		addr, err = net.ResolveTCPAddr("tcp4", net.JoinHostPort(srv.Target, strconv.Itoa(int(srv.Port))))
 		if err != nil {
 			lastRecord = srv.Target
 			continue
