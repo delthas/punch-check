@@ -83,6 +83,9 @@ func ReadMessage(c *net.TCPConn) (Message, error) {
 	default:
 		return nil, fmt.Errorf("reading message: unknown message type: %v", MessageType(mt))
 	}
+	if ml == 0 {
+		return m, nil
+	}
 	jr := io.LimitReader(c, ml)
 	jd := json.NewDecoder(jr)
 	if err := jd.Decode(&m); err != nil {
