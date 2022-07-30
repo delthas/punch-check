@@ -464,6 +464,9 @@ func process() {
 					})
 					continue
 				}
+				if client.ports == nil {
+					continue
+				}
 				for i := len(client.ports) - 1; i >= 0; i-- { // C* -> A0
 					// send in reverse order to check both assignment contiguity and preservation
 					clientPort := client.ports[i]
