@@ -64,7 +64,7 @@ func (m *MessageReceive) Type() MessageType {
 
 func ReadMessage(c *net.TCPConn) (Message, error) {
 	header := make([]byte, 3)
-	n, err := io.ReadFull(c, header)
+	_, err := io.ReadFull(c, header)
 	if err != nil {
 		return nil, fmt.Errorf("reading message header: read error: %v", err)
 	}
@@ -81,7 +81,7 @@ func ReadMessage(c *net.TCPConn) (Message, error) {
 	case PortsType:
 		m = &MessagePorts{}
 	default:
-		return nil, fmt.Errorf("reading message: unknown message type: %v", MessageType(n))
+		return nil, fmt.Errorf("reading message: unknown message type: %v", MessageType(mt))
 	}
 	jr := io.LimitReader(c, ml)
 	jd := json.NewDecoder(jr)
