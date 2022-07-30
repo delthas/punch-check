@@ -255,6 +255,11 @@ func process() {
 					break
 				}
 				switch m := e.message.(type) {
+				case *MessagePing:
+					closeConnection(e.c, &MessageInfo{
+						MessageType: 1,
+						Message:     "OK",
+					})
 				case *MessagePorts:
 					if c.ports != nil {
 						logErr.Printf("received duplicate ports message: %v", e.message.Type())

@@ -17,6 +17,7 @@ var (
 	ReceiveType MessageType = 1
 	InfoType    MessageType = 2
 	PortsType   MessageType = 3
+	PingType    MessageType = 4
 )
 
 type Message interface {
@@ -62,6 +63,13 @@ func (m *MessageReceive) Type() MessageType {
 	return ReceiveType
 }
 
+type MessagePing struct {
+}
+
+func (m *MessagePing) Type() MessageType {
+	return PingType
+}
+
 func ReadMessage(c *net.TCPConn) (Message, error) {
 	header := make([]byte, 3)
 	_, err := io.ReadFull(c, header)
@@ -80,6 +88,8 @@ func ReadMessage(c *net.TCPConn) (Message, error) {
 		m = &MessageInfo{}
 	case PortsType:
 		m = &MessagePorts{}
+	case PingType:
+		m = &MessagePing{}
 	default:
 		return nil, fmt.Errorf("reading message: unknown message type: %v", MessageType(mt))
 	}
